@@ -334,24 +334,14 @@ function editStep(index) {
     document.getElementById('chat-container').style.paddingTop = window.innerWidth <= 600 ? '70px' : '80px';
   }
 
-  // Remove all steps and user answers after the selected one
-  for (let k = index + 1; k <= cur; k++) {
-    const s = document.getElementById(`step-${k}`);
-    if (s) s.remove();
-    const u = document.getElementById(`user-row-${k}`);
-    if (u) u.remove();
-  }
-
-  cur = index;
-  pf.style.width = Math.round((cur / steps.length) * 100) + '%';
-
-  // Restore the selected step
+  // Restore the selected step form inline (do not delete future steps!)
   const stepEl = document.getElementById(`step-${index}`);
   if (stepEl) {
     stepEl.classList.remove('past-step');
     const inputArea = stepEl.querySelector('.input-area');
     if (inputArea) {
       inputArea.style.display = 'block';
+      // Reset transition styles so it displays cleanly
       inputArea.style.height = '';
       inputArea.style.marginTop = '';
       inputArea.style.opacity = '';
@@ -360,7 +350,7 @@ function editStep(index) {
     }
   }
 
-  // Remove the old user answer bubble for this step
+  // Remove the old user answer bubble for this step so we can recreate it
   const userRow = document.getElementById(`user-row-${index}`);
   if (userRow) userRow.remove();
 
@@ -384,7 +374,7 @@ function submitAnswer(i, displayVal, rawVal) {
   
   // Hide form smoothly to prevent scroll jump
   if(inputArea) {
-    const h = inputArea.offsetHeight;
+    const h = inputArea.offsetHeight || inputArea.scrollHeight;
     inputArea.style.height = h + 'px';
     inputArea.style.overflow = 'hidden';
     void inputArea.offsetHeight; // reflow
@@ -392,10 +382,17 @@ function submitAnswer(i, displayVal, rawVal) {
     inputArea.style.height = '0px';
     inputArea.style.marginTop = '0px';
     inputArea.style.opacity = '0';
-    setTimeout(() => { inputArea.style.display = 'none'; }, 350);
+    setTimeout(() => { 
+        inputArea.style.display = 'none'; 
+        inputArea.style.transition = ''; // Reset for future edits
+    }, 350);
   }
   stepEl.classList.add('past-step');
   
+  // Remove existing bubble if it accidentally exists
+  const oldUserRow = document.getElementById(`user-row-${i}`);
+  if (oldUserRow) oldUserRow.remove();
+
   // Create User Bubble
   const userRow = document.createElement('div');
   userRow.className = 'user-row editable';
@@ -405,17 +402,44 @@ function submitAnswer(i, displayVal, rawVal) {
     ${displayVal}
     <svg style="display:inline-block; vertical-align:-2px; margin-left:6px; width:14px; height:14px; opacity:0.7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
   </div>`;
-  chat.appendChild(userRow);
+  
+  // Insert directly below the edited step, NOT at the end of the chat
+  stepEl.insertAdjacentElement('afterend', userRow);
   
   requestAnimationFrame(() => {
     userRow.classList.add('active');
-    // block: 'nearest' prevents aggressive scrolling, only scrolls if off-screen
-    setTimeout(() => { userRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 50);
+    // Only scroll down aggressively if we are answering the latest question
+    if (i === cur) {
+        setTimeout(() => { userRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 50);
+    }
   });
 
   // Check Bail Condition
   if(steps[i].id === 'comfort' && rawVal === 'Not really my thing right now'){
+    // If they changed to bail from a past question, wipe all future steps
+    if (i < cur) {
+      for (let k = i + 1; k <= cur; k++) {
+        const s = document.getElementById(`step-${k}`);
+        if (s) s.remove();
+        const u = document.getElementById(`user-row-${k}`);
+        if (u) u.remove();
+      }
+      cur = i;
+      pf.style.width = Math.round((cur / steps.length) * 100) + '%';
+    }
     setTimeout(() => { showNotReady(); busy = false; }, 600);
+    return;
+  }
+
+  // If we are just editing a past step, we don't render the next step again
+  if (i < cur) {
+    setTimeout(() => { 
+        // Re-trigger the done screen if we're at the very end and it was removed
+        if (cur >= steps.length && !document.querySelector('.final-screen')) {
+            done();
+        }
+        busy = false; 
+    }, 500);
     return;
   }
 
