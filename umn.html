@@ -16,12 +16,13 @@ html,body{background:var(--white);font-family:-apple-system,BlinkMacSystemFont,'
 /* Header & Progress */
 #pw{position:fixed;top:0;left:0;right:0;z-index:100;height:4px;background:var(--g100)}
 #pf{height:100%;background:var(--blue);width:0%;transition:width 0.6s cubic-bezier(0.25, 1, 0.5, 1)}
-#bar{position:fixed;top:4px;left:0;right:0;z-index:99;display:flex;align-items:center;gap:10px;padding:14px 24px;background:rgba(255,255,255,.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--g100)}
+#bar{position:fixed;top:4px;left:0;right:0;z-index:99;display:flex;align-items:center;gap:10px;padding:14px 24px;background:rgba(255,255,255,.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--g100);transition:transform 0.4s ease, opacity 0.4s ease;}
+#bar.hidden{transform:translateY(-150%);opacity:0;pointer-events:none;}
 .brand{font-size:16px;font-weight:600;color:var(--blue);letter-spacing:-.3px}
 .ctag{margin-left:auto;font-size:10px;font-weight:700;color:var(--g500);background:var(--g50);border:1px solid var(--g100);padding:4px 12px;border-radius:20px;text-transform:uppercase;letter-spacing:0.5px}
 
 /* Chat Container */
-#chat-container{display:flex;flex-direction:column;max-width:600px;margin:0 auto;padding:80px 20px 120px;gap:24px}
+#chat-container{display:flex;flex-direction:column;max-width:600px;margin:0 auto;padding:80px 20px 120px;gap:24px;transition:padding-top 0.4s ease;}
 .step-wrapper{opacity:0;transform:translateY(20px);transition:opacity 0.4s ease, transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)}
 .step-wrapper.active{opacity:1;transform:translateY(0)}
 .step-wrapper.past-step{opacity:0.5;pointer-events:none}
@@ -51,16 +52,16 @@ html,body{background:var(--white);font-family:-apple-system,BlinkMacSystemFont,'
 .tf-opt.sel{border-color:var(--blue);background:var(--blue-light)}
 .badge{display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;border:1px solid var(--g200);background:var(--g50);color:var(--g500);font-size:11px;font-weight:700;margin-right:12px;transition:all .2s; flex-shrink:0}
 .tf-opt.sel .badge{background:var(--blue);border-color:var(--blue);color:var(--white)}
-.badge svg { opacity: 0; transform: scale(0.5); transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1); }
+.badge svg { opacity: 0; transform: scale(0.5); width: 14px; height: 14px; transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1); }
 .tf-opt.sel .badge svg { opacity: 1; transform: scale(1); }
 .opt-txt{font-size:15.5px;color:var(--text);font-weight:500;line-height:1.4}
 .tf-opt.sel .opt-txt{color:var(--blue)}
 
-/* Grid Options */
-.tf-opts.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.tf-opts.grid .tf-opt { padding: 12px; height: 100%; align-items: flex-start; }
-.tf-opts.grid .badge { margin-top: 2px; margin-right: 10px; width: 20px; height: 20px; }
-.tf-opts.grid .opt-txt { font-size: 14px; margin-top: 1px; }
+/* Grid Options (Shrunk down to fit viewport better) */
+.tf-opts.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.tf-opts.grid .tf-opt { padding: 10px 12px; height: 100%; align-items: flex-start; }
+.tf-opts.grid .badge { margin-top: 1px; margin-right: 8px; width: 18px; height: 18px; }
+.tf-opts.grid .opt-txt { font-size: 13.5px; margin-top: 0; }
 
 /* Text Inputs & Add Buttons */
 .tf-add{display:flex;align-items:center;padding:10px 14px;border-radius:var(--r);border:2px dashed var(--g300);background:var(--white);transition:all .2s;margin-bottom:1.5rem}
@@ -97,11 +98,16 @@ html,body{background:var(--white);font-family:-apple-system,BlinkMacSystemFont,'
   .tf-opt{padding:12px 14px;}
   .cta{width:100%;justify-content:center;margin-top:1rem}
   
-  /* Mobile Grid Overrides */
-  .tf-opts.grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .tf-opts.grid .tf-opt { padding: 10px; }
-  .tf-opts.grid .badge { margin-right: 8px; width: 20px; height: 20px; font-size: 10px; }
-  .tf-opts.grid .opt-txt { font-size: 13.5px; }
+  /* Mobile Grid Overrides (Extra Compact) */
+  .tf-opts.grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .tf-opts.grid .tf-opt { padding: 8px 10px; border-width: 1.5px; }
+  .tf-opts.grid .badge { margin-right: 6px; width: 16px; height: 16px; margin-top: 2px; }
+  .tf-opts.grid .badge svg { width: 10px; height: 10px; }
+  .tf-opts.grid .opt-txt { font-size: 13px; line-height: 1.3; }
+  
+  .tf-add { padding: 8px 12px; margin-bottom: 1rem; border-width: 1.5px; }
+  .tf-add-inp { font-size: 13.5px; }
+  .tf-add-btn { padding: 6px 12px; font-size: 12px; }
 }
 </style>
 </head>
@@ -214,14 +220,20 @@ function chev(){return`<svg width="18" height="18" viewBox="0 0 24 24" fill="non
 function buildOpt(o, idx, isMulti) {
   return `
     <div class="tf-opt" data-v="${o}">
-      <div class="badge">${isMulti ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>` : ALPHA[idx % 26]}</div>
+      <div class="badge">${isMulti ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>` : ALPHA[idx % 26]}</div>
       <div class="opt-txt">${o}</div>
     </div>
   `;
 }
 
-function scrollToBottom() {
-  setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 50);
+// Custom scroll function so questions don't scroll completely out of view
+function scrollToStep(stepEl) {
+  setTimeout(() => {
+    if (stepEl) {
+      const y = stepEl.getBoundingClientRect().top + window.scrollY - 30;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+  }, 50);
 }
 
 function renderStep(i){
@@ -284,7 +296,8 @@ function renderStep(i){
   
   requestAnimationFrame(() => {
     stepEl.classList.add('active');
-    scrollToBottom();
+    scrollToStep(stepEl);
+    
     // Auto focus desktop
     if(window.innerWidth > 600) {
       const t=stepEl.querySelector('.txt') || stepEl.querySelector('.tf-add-inp');
@@ -297,6 +310,12 @@ function submitAnswer(i, displayVal, rawVal) {
   if(busy) return;
   busy = true;
   R[steps[i].id] = rawVal;
+  
+  // Hide top bar after first question
+  if(i === 0) {
+    document.getElementById('bar').classList.add('hidden');
+    document.getElementById('chat-container').style.paddingTop = '24px';
+  }
   
   const stepEl = document.getElementById(`step-${i}`);
   const inputArea = stepEl.querySelector('.input-area');
@@ -313,7 +332,7 @@ function submitAnswer(i, displayVal, rawVal) {
   
   requestAnimationFrame(() => {
     userRow.classList.add('active');
-    scrollToBottom();
+    setTimeout(() => { userRow.scrollIntoView({ behavior: 'smooth', block: 'end' }); }, 50);
   });
 
   // Check Bail Condition
@@ -397,7 +416,7 @@ function wire(el,i){
         const p = document.createElement('div');
         p.className = 'tf-opt sel';
         p.dataset.v = v;
-        p.innerHTML = `<div class="badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div><div class="opt-txt">${v}</div>`;
+        p.innerHTML = `<div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div><div class="opt-txt">${v}</div>`;
         p.onclick=()=>{
           sel.has(v)?(sel.delete(v),p.classList.remove('sel')):(sel.add(v),p.classList.add('sel'));
           btn.disabled=sel.size===0;
@@ -425,7 +444,7 @@ function showNotReady(){
       </div>
     </div>`;
   chat.appendChild(el);
-  scrollToBottom();
+  scrollToStep(el);
 }
 
 function done(){
@@ -445,7 +464,7 @@ function done(){
       </div>
     </div>`;
   chat.appendChild(el);
-  scrollToBottom();
+  scrollToStep(el);
   console.log('Final Data:', R);
 }
 
