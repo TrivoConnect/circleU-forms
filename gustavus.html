@@ -161,7 +161,7 @@ const steps=[
    ok:v=>v.trim().length>2},
 
   {id:'vibe',
-   q:"When you decide to go out, what makes it feel worth it versus staying in?",
+   q:"When you actually go out, what makes it feel worth it versus staying in?",
    info:"This helps me build a group with the right energy, not just the right interests.",
    type:'single',
    opts:[
@@ -188,21 +188,42 @@ const steps=[
    grid: true,
    opts:['Patio drinking','Breweries','Bars','Out in the sun','Football throw','Frisbee catch','Baseball throw','Pickup soccer','Hockey','Hammocking','Coffee runs','Running / jogging','Live music / shows','Board games']},
 
-  {id:'hangouts',
-   q:"Which of these would you actually go to this week?",
-   info:"Real events and spots. Pick everything that sounds good.",
-   type:'multi-grouped',
-   groups:[
-     {label:'On campus this week',opts:['Trivia night at The Dive','Dinner at the Caf','Walk in the Arb','Lund Center workout / climbing']},
-     {label:'Spots near campus',opts:['River Rock Coffee run','Food at Patrick\'s on Third','Walk downtown St. Peter','Diamond Dust Bakery','Community Gathering at Minnesota Square Park']}
-   ]},
-
   {id:'avail',
    q:"When are you free? Pick everything that works.",
    type:'multi-custom',
    grid: true,
    opts:['Tuesday evening','Wednesday evening','Thursday evening','Friday night','Saturday afternoon','Saturday evening','Sunday afternoon'],
    cph:'Add a specific time...'},
+
+  {id:'hangouts',
+   q:"Which of these would you actually go to this week?",
+   info:"Here are a few events happening this week. Pick what sounds good, or add your own and we can suggest them to others!",
+   type:'multi-custom',
+   grid: false,
+   opts:() => {
+     const eventMap = {
+       'Tuesday evening': ['Trivia night at The Dive'],
+       'Wednesday evening': ['Walk in the Arb'],
+       'Thursday evening': ['Dinner at the Caf'],
+       'Friday night': ['Live music gathering at Minnesota Square Park', 'Diamond Dust Bakery'],
+       'Saturday afternoon': ['Lund Center workout / climbing', 'River Rock Coffee run'],
+       'Saturday evening': ['Food at Patrick\'s on Third'],
+       'Sunday afternoon': ['Walk downtown St. Peter']
+     };
+     let evts = new Set();
+     if(Array.isArray(R.avail)){
+         R.avail.forEach(day => { 
+             if(eventMap[day]) eventMap[day].forEach(e => evts.add(e)); 
+         });
+     }
+     // Fallback if none mapped or no standard days chosen
+     if(evts.size === 0) {
+         ['Trivia night at The Dive', 'Dinner at the Caf', 'River Rock Coffee run', 'Walk in the Arb', 'Live music gathering at Minnesota Square Park'].forEach(e => evts.add(e));
+     }
+     evts.add('Open to any casual, low-commitment on-campus hang');
+     return Array.from(evts);
+   },
+   cph:'Add another event or spot...'},
 
   {id:'size',
    q:"How many people feels right for a hangout?",
@@ -280,7 +301,8 @@ function renderStep(i){
     <div class="hint">${s.hint||''}</div>
     <div><button class="cta" id="cb" disabled>Continue ${chev()}</button></div>`;
   } else if(s.type==='single'){
-    const optsHtml=s.opts.map((o, idx)=>buildOpt(o, idx, false)).join('');
+    const currentOpts = typeof s.opts === 'function' ? s.opts() : s.opts;
+    const optsHtml=currentOpts.map((o, idx)=>buildOpt(o, idx, false)).join('');
     inputHtml=`<div class="tf-opts">${optsHtml}</div>${isLast ? `${editHint}<button class="cta" id="cb" disabled>Submit Response ${chev()}</button>` : ''}`;
   } else if(s.type==='multi-grouped'){
     let g='';
@@ -289,9 +311,10 @@ function renderStep(i){
     });
     inputHtml=`${g}${isLast ? editHint : ''}<button class="cta" id="cb" disabled>${isLast?'Submit Response':'Continue'} ${chev()}</button>`;
   } else if(s.type==='multi-custom'){
-    const optsHtml=s.opts.map((o, idx)=>buildOpt(o, idx, true)).join('');
+    const currentOpts = typeof s.opts === 'function' ? s.opts() : s.opts;
+    const optsHtml=currentOpts.map((o, idx)=>buildOpt(o, idx, true)).join('');
     inputHtml=`
-    <div class="tf-opts grid" id="custom-opts-wrap-${i}">${optsHtml}</div>
+    <div class="tf-opts ${s.grid ? 'grid' : ''}" id="custom-opts-wrap-${i}">${optsHtml}</div>
     <div class="tf-add">
       <input class="tf-add-inp" id="ai" placeholder="${s.cph||'Add another option...'}" autocomplete="off">
       <button class="tf-add-btn" id="ab">Add</button>
@@ -446,11 +469,12 @@ function wire(el,i){
     inp.onkeydown=e=>{if(e.key==='Enter'&&!btn.disabled)btn.click()};
     btn.onclick=()=>submitAnswer(i, inp.value.trim(), inp.value.trim());
   } else if (s.type === 'autocomplete') {
+    const currentOpts = typeof s.opts === 'function' ? s.opts() : s.opts;
     const inp=el.querySelector('#ti'), btn=el.querySelector('#cb'), list=el.querySelector('#ac-list');
     const renderList = (val) => {
       list.innerHTML = '';
       if(!val) { list.style.display = 'none'; return; }
-      const matches = s.opts.filter(o => o.toLowerCase().includes(val.toLowerCase()));
+      const matches = currentOpts.filter(o => o.toLowerCase().includes(val.toLowerCase()));
       if(matches.length === 0) { list.style.display = 'none'; return; }
       list.style.display = 'flex';
       matches.forEach(m => {
