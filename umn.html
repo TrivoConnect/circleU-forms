@@ -376,14 +376,12 @@ function editStep(index) {
       });
     }
   }
-  for (let k = index + 1; k <= cur; k++) {
-    const s = document.getElementById(`step-${k}`); if (s) s.remove();
-    const u = document.getElementById(`user-row-${k}`); if (u) u.remove();
-  }
+  
+  // Note: We intentionally DO NOT delete subsequent steps here to preserve saved answers
+  
   const userRow = document.getElementById(`user-row-${index}`);
   if (userRow) userRow.remove();
-  cur = index;
-  pf.style.width = Math.round((cur / steps.length) * 100) + '%';
+  
   scrollToStep(stepEl);
   busy = false;
 }
@@ -448,10 +446,21 @@ function submitAnswer(i, displayVal, rawVal) {
         setTimeout(() => { showNotReady(); busy = false; }, 100);
         return;
       }
+      
+      // If we're updating a past step, preserve the rest of the flow and scroll back to the active edge
       if (i < cur) {
-        setTimeout(() => { if (cur >= steps.length && !document.querySelector('.final-screen')) { done(); } busy = false; }, 100);
+        setTimeout(() => { 
+          if (cur >= steps.length && !document.querySelector('.final-screen')) { 
+            done(); 
+          } else if (cur < steps.length) {
+            const latestStep = document.getElementById(`step-${cur}`);
+            if (latestStep) scrollToStep(latestStep);
+          }
+          busy = false; 
+        }, 100);
         return;
       }
+      
       cur++;
       pf.style.width = Math.round((cur / steps.length) * 100) + '%';
       if(cur >= steps.length) { done(); } else { renderStep(cur); }
@@ -537,8 +546,8 @@ function showNotReady(){
       ${av()}
       <div class="bot-content">
         <div class="qtxt">That's totally fair.</div>
-        <div class="warn-card">Hangouts with strangers aren't for everyone right now. CircleU works better when you're genuinely ready for it. I won't match you this round but I'm keeping your email and will reach out when there's a softer way in.</div>
-        <div class="hint" style="margin-top:4px">No spam, no pressure. You'll only hear from us when something fits.</div>
+        <div class="warn-card">Hangouts with strangers aren't for everyone right now. CircleU works better when you're genuinely ready for it. Try the CircleU app to find verified students from your campus and beyond around you.</div>
+        <div class="hint" style="margin-top:4px">Download the app to explore on your own terms.</div>
         <div style="text-align: left; margin-top: 24px;">
           <p style="font-size: 13px; color: var(--g500); margin-bottom: 12px; font-weight: 500;">Need to change an answer? Scroll up and tap on your previous message to edit it.</p>
           <button class="cta" onclick="location.reload()" style="margin-top: 0; padding: 12px 24px; font-size: 14px; background: var(--white); color: var(--text); border: 2px solid var(--g200);">Start Over</button>
