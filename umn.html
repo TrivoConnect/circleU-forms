@@ -38,6 +38,8 @@ html,body{background:var(--white);font-family:-apple-system,BlinkMacSystemFont,'
 .user-row{display:flex;justify-content:flex-end;margin:8px 0 16px;opacity:0;transform:translateY(10px);transition:all 0.4s cubic-bezier(0.25, 1, 0.5, 1)}
 .user-row.active{opacity:1;transform:translateY(0)}
 .user-bubble{background:var(--blue);color:var(--white);padding:12px 18px;border-radius:18px 18px 4px 18px;font-size:16px;font-weight:500;max-width:85%;line-height:1.4;box-shadow:0 4px 12px rgba(5,69,123,0.15)}
+.user-row.editable { cursor: pointer; transition: transform 0.2s ease, opacity 0.2s ease; }
+.user-row.editable:hover { transform: scale(0.98); opacity: 0.85; }
 
 /* Input Area animations */
 .input-area{margin-top:16px;animation:fadeIn 0.4s ease 0.2s both}
@@ -56,6 +58,13 @@ html,body{background:var(--white);font-family:-apple-system,BlinkMacSystemFont,'
 .tf-opt.sel .badge svg { opacity: 1; transform: scale(1); }
 .opt-txt{font-size:15.5px;color:var(--text);font-weight:500;line-height:1.4}
 .tf-opt.sel .opt-txt{color:var(--blue)}
+
+/* Compact List Options */
+.tf-opts.list-compact { gap: 8px; }
+.tf-opts.list-compact .tf-opt { padding: 10px 14px; }
+.tf-opts.list-compact .badge { margin-right: 10px; width: 20px; height: 20px; }
+.tf-opts.list-compact .badge svg { width: 12px; height: 12px; }
+.tf-opts.list-compact .opt-txt { font-size: 14.5px; line-height: 1.35; }
 
 /* Grid Options (Shrunk down to fit viewport better) */
 .tf-opts.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -104,6 +113,12 @@ html,body{background:var(--white);font-family:-apple-system,BlinkMacSystemFont,'
   .tf-opts.grid .badge { margin-right: 6px; width: 16px; height: 16px; margin-top: 2px; }
   .tf-opts.grid .badge svg { width: 10px; height: 10px; }
   .tf-opts.grid .opt-txt { font-size: 13px; line-height: 1.3; }
+  
+  /* Mobile Compact List Overrides */
+  .tf-opts.list-compact .tf-opt { padding: 8px 12px; border-width: 1.5px; }
+  .tf-opts.list-compact .badge { margin-right: 8px; width: 16px; height: 16px; }
+  .tf-opts.list-compact .badge svg { width: 10px; height: 10px; }
+  .tf-opts.list-compact .opt-txt { font-size: 13px; line-height: 1.35; }
   
   .tf-add { padding: 8px 12px; margin-bottom: 1rem; border-width: 1.5px; }
   .tf-add-inp { font-size: 13.5px; }
@@ -265,7 +280,7 @@ function renderStep(i){
   } else if(s.type==='multi-grouped'){
     let g='';
     s.groups.forEach(gr=>{
-      g+=`<div class="sec-label">${gr.label}</div><div class="tf-opts">${gr.opts.map((o, idx)=>buildOpt(o, idx, true)).join('')}</div>`;
+      g+=`<div class="sec-label">${gr.label}</div><div class="tf-opts list-compact">${gr.opts.map((o, idx)=>buildOpt(o, idx, true)).join('')}</div>`;
     });
     inputHtml=`${g}<button class="cta" id="cb" disabled>${isLast?'Send Response':'Continue'} ${chev()}</button>`;
   } else if(s.type==='multi-custom'){
@@ -306,6 +321,53 @@ function renderStep(i){
   });
 }
 
+function editStep(index) {
+  if (busy) return;
+  busy = true;
+
+  // Remove final screens if they exist
+  document.querySelectorAll('.final-screen').forEach(el => el.remove());
+
+  // Show top bar again if editing the very first question
+  if (index === 0) {
+    document.getElementById('bar').classList.remove('hidden');
+    document.getElementById('chat-container').style.paddingTop = window.innerWidth <= 600 ? '70px' : '80px';
+  }
+
+  // Remove all steps and user answers after the selected one
+  for (let k = index + 1; k <= cur; k++) {
+    const s = document.getElementById(`step-${k}`);
+    if (s) s.remove();
+    const u = document.getElementById(`user-row-${k}`);
+    if (u) u.remove();
+  }
+
+  cur = index;
+  pf.style.width = Math.round((cur / steps.length) * 100) + '%';
+
+  // Restore the selected step
+  const stepEl = document.getElementById(`step-${index}`);
+  if (stepEl) {
+    stepEl.classList.remove('past-step');
+    const inputArea = stepEl.querySelector('.input-area');
+    if (inputArea) {
+      inputArea.style.display = 'block';
+      inputArea.style.height = '';
+      inputArea.style.marginTop = '';
+      inputArea.style.opacity = '';
+      inputArea.style.overflow = '';
+      inputArea.style.transition = '';
+    }
+  }
+
+  // Remove the old user answer bubble for this step
+  const userRow = document.getElementById(`user-row-${index}`);
+  if (userRow) userRow.remove();
+
+  scrollToStep(stepEl);
+  busy = false;
+}
+
 function submitAnswer(i, displayVal, rawVal) {
   if(busy) return;
   busy = true;
@@ -320,19 +382,35 @@ function submitAnswer(i, displayVal, rawVal) {
   const stepEl = document.getElementById(`step-${i}`);
   const inputArea = stepEl.querySelector('.input-area');
   
-  // Hide form and fade question
-  if(inputArea) inputArea.style.display = 'none';
+  // Hide form smoothly to prevent scroll jump
+  if(inputArea) {
+    const h = inputArea.offsetHeight;
+    inputArea.style.height = h + 'px';
+    inputArea.style.overflow = 'hidden';
+    void inputArea.offsetHeight; // reflow
+    inputArea.style.transition = 'height 0.35s cubic-bezier(0.25, 1, 0.5, 1), margin-top 0.35s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.25s ease';
+    inputArea.style.height = '0px';
+    inputArea.style.marginTop = '0px';
+    inputArea.style.opacity = '0';
+    setTimeout(() => { inputArea.style.display = 'none'; }, 350);
+  }
   stepEl.classList.add('past-step');
   
   // Create User Bubble
   const userRow = document.createElement('div');
-  userRow.className = 'user-row';
-  userRow.innerHTML = `<div class="user-bubble">${displayVal}</div>`;
+  userRow.className = 'user-row editable';
+  userRow.id = `user-row-${i}`;
+  userRow.onclick = () => editStep(i);
+  userRow.innerHTML = `<div class="user-bubble" title="Tap to edit">
+    ${displayVal}
+    <svg style="display:inline-block; vertical-align:-2px; margin-left:6px; width:14px; height:14px; opacity:0.7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+  </div>`;
   chat.appendChild(userRow);
   
   requestAnimationFrame(() => {
     userRow.classList.add('active');
-    setTimeout(() => { userRow.scrollIntoView({ behavior: 'smooth', block: 'end' }); }, 50);
+    // block: 'nearest' prevents aggressive scrolling, only scrolls if off-screen
+    setTimeout(() => { userRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 50);
   });
 
   // Check Bail Condition
@@ -433,7 +511,7 @@ function wire(el,i){
 function showNotReady(){
   pf.style.width='100%';
   const el=document.createElement('div');
-  el.className='step-wrapper active';
+  el.className='step-wrapper active final-screen';
   el.innerHTML=`
     <div class="bot-row">
       ${av()}
@@ -441,6 +519,10 @@ function showNotReady(){
         <div class="qtxt">That's totally fair.</div>
         <div class="warn-card">Hangouts with strangers aren't for everyone right now. CircleU works better when you're genuinely ready for it. I won't match you this round but I'm keeping your email and will reach out when there's a softer way in.</div>
         <div class="hint" style="margin-top:4px">No spam, no pressure. You'll only hear from us when something fits.</div>
+        <div style="text-align: left; margin-top: 24px;">
+          <p style="font-size: 13px; color: var(--g500); margin-bottom: 12px; font-weight: 500;">Need to change an answer? Scroll up and tap on your previous message to edit it.</p>
+          <button class="cta" onclick="location.reload()" style="margin-top: 0; padding: 12px 24px; font-size: 14px; background: var(--white); color: var(--text); border: 2px solid var(--g200);">Start Over</button>
+        </div>
       </div>
     </div>`;
   chat.appendChild(el);
@@ -450,7 +532,7 @@ function showNotReady(){
 function done(){
   pf.style.width='100%';
   const el=document.createElement('div');
-  el.className='step-wrapper active';
+  el.className='step-wrapper active final-screen';
   el.innerHTML=`
     <div class="bot-row">
       ${av()}
@@ -460,6 +542,10 @@ function done(){
           I'll review responses over the next 24 to 48 hours. If I find a group that fits, I'll email you before sharing anything about you with anyone.
           <br><br>
           If the match isn't right this week, I'll let you know that too. Either way you'll hear back. No ghosts.
+        </div>
+        <div style="text-align: left; margin-top: 24px;">
+          <p style="font-size: 13px; color: var(--g500); margin-bottom: 12px; font-weight: 500;">Need to change an answer? Scroll up and tap on your previous message to edit it.</p>
+          <button class="cta" onclick="location.reload()" style="margin-top: 0; padding: 12px 24px; font-size: 14px; background: var(--white); color: var(--text); border: 2px solid var(--g200);">Submit Another Entry</button>
         </div>
       </div>
     </div>`;
