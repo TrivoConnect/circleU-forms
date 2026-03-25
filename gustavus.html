@@ -107,8 +107,10 @@ html,body{background:var(--white);font-family:-apple-system,BlinkMacSystemFont,'
   .tf-opt{padding:12px 14px;}
   .cta{width:100%;justify-content:center;margin-top:1rem}
   
-  /* Override to 1 column on mobile to prevent overflow on multiline options */
-  .tf-opts.grid { grid-template-columns: 1fr; }
+  /* Maintain 2 columns on mobile, but optimize spacing and text size to fit */
+  .tf-opts.grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .tf-opts.grid .tf-opt { padding: 8px 10px; }
+  .tf-opts.grid .opt-txt { font-size: 13px; }
 }
 </style>
 </head>
@@ -134,8 +136,14 @@ const GUSTAVUS_MAJORS = [
 ];
 
 const steps=[
+  {id:'name',
+   q:"Hi Gustie, I am Sanu and I am organizing a few real hangouts for Gustavus students this week. No planning needed from you. What's your first name?",
+   type:'text',ph:'your first name',
+   hint:"Just your first name is perfect.",
+   ok:v=>v.trim().length>1},
+
   {id:'email',
-   q:"Hi Gustie, I am Sanu and I am organizing a few real hangouts for Gustavus students this week. No planning needed from you. What's your Gustavus email?",
+   q:()=>`Nice to meet you, ${R.name}. What's your Gustavus email?`,
    type:'text',ph:'your gustavus email',
    hint:"Used only to verify you go to Gustavus and to reach you if I find your group. Never shared.",
    ok:v=>v.toLowerCase().includes('.edu')},
@@ -235,6 +243,7 @@ function buildOpt(o, idx, isMulti) {
   `;
 }
 
+// Improved Scroll: Ensures the new question text is at the top of the view
 function scrollToStep(stepEl) {
   setTimeout(() => {
     if (stepEl) {
@@ -255,6 +264,7 @@ function renderStep(i){
   
   let infoHtml = s.info ? `<div class="info-card">${s.info}</div>` : '';
   let inputHtml='';
+  let qText = typeof s.q === 'function' ? s.q() : s.q;
 
   if(s.type==='text'){
     inputHtml=`
@@ -294,7 +304,7 @@ function renderStep(i){
     <div class="bot-row">
       ${av()}
       <div class="bot-content">
-        <div class="qtxt">${s.q}</div>
+        <div class="qtxt">${qText}</div>
         ${infoHtml}
         <div class="input-area" id="input-area-${i}">
           ${inputHtml}
