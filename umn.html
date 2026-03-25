@@ -2,562 +2,435 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>CircleU — UMN Hangouts</title>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue:#05457B;--blue-mid:#7EC4F3;--blue-light:#E8F3FB;--blue-pale:#F0F7FD;
+  --white:#FFFFFF;--g50:#F7F7F7;--g100:#EFEFEF;--g200:#E0E0E0;--g300:#C8C8C8;
+  --g500:#888;--g700:#444;--text:#1A1A1A;--r:12px;
+}
+html,body{background:var(--white);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;color:var(--text);-webkit-font-smoothing:antialiased;min-height:100%}
 
-  :root {
-    --bg: #fafaf8;
-    --surface: #f2f1ee;
-    --surface2: #e8e7e3;
-    --border: rgba(0,0,0,0.1);
-    --border2: rgba(0,0,0,0.18);
-    --text: #1a1a18;
-    --text2: #5a5a56;
-    --text3: #9a9a94;
-    --accent-bg: #fff0f0;
-    --accent-text: #c0392b;
-    --accent-border: #f5c0bb;
-    --pill-sel-bg: #c0392b;
-    --pill-sel-text: #fff;
-    --radius: 12px;
-    --radius-sm: 8px;
-  }
+/* Header & Progress */
+#pw{position:fixed;top:0;left:0;right:0;z-index:100;height:4px;background:var(--g100)}
+#pf{height:100%;background:var(--blue);width:0%;transition:width 0.6s cubic-bezier(0.25, 1, 0.5, 1)}
+#bar{position:fixed;top:4px;left:0;right:0;z-index:99;display:flex;align-items:center;gap:10px;padding:14px 24px;background:rgba(255,255,255,.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--g100)}
+.brand{font-size:16px;font-weight:600;color:var(--blue);letter-spacing:-.3px}
+.ctag{margin-left:auto;font-size:10px;font-weight:700;color:var(--g500);background:var(--g50);border:1px solid var(--g100);padding:4px 12px;border-radius:20px;text-transform:uppercase;letter-spacing:0.5px}
 
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #141412;
-      --surface: #1e1e1b;
-      --surface2: #2a2a26;
-      --border: rgba(255,255,255,0.1);
-      --border2: rgba(255,255,255,0.18);
-      --text: #f0efe8;
-      --text2: #9a9a90;
-      --text3: #5a5a54;
-      --accent-bg: #3a1a18;
-      --accent-text: #f08a82;
-      --accent-border: #5a2a26;
-      --pill-sel-bg: #c0392b;
-      --pill-sel-text: #fff;
-    }
-  }
+/* Seamless Animations */
+#slides{position:relative;min-height:100vh;min-height:100dvh;padding-top:60px; overflow: hidden;}
+.slide{position:absolute;inset:0;padding-top:60px;display:flex;align-items:flex-start;justify-content:center;opacity:0;pointer-events:none;transform:translateY(30px);transition:all 0.45s cubic-bezier(0.25, 1, 0.5, 1)}
+.slide.active{opacity:1;pointer-events:all;transform:translateY(0);position:relative;inset:auto;min-height:calc(100vh - 60px);min-height:calc(100dvh - 60px)}
+.slide.exit{opacity:0;transform:translateY(-30px);position:absolute;inset:0;pointer-events:none}
+.inner{width:100%;max-width:600px;padding:3rem 1.5rem 5rem}
 
-  html, body {
-    height: 100%;
-    background: var(--bg);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    color: var(--text);
-    -webkit-font-smoothing: antialiased;
-  }
+/* Typography & Layout */
+.qrow{display:flex;align-items:flex-start;gap:16px;margin-bottom:2rem}
+.av{width:52px;height:52px;border-radius:50%;overflow:hidden;background:var(--blue-pale);border:1.5px solid #C8DFF0;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;}
+.qtxt{font-size:24px;font-weight:600;line-height:1.35;color:var(--text);letter-spacing:-.5px}
+.sec-label{font-size:12px;font-weight:700;color:var(--g500);text-transform:uppercase;letter-spacing:.08em;margin:24px 0 12px;margin-left:4px;}
+.sec-label:first-child{margin-top:0}
 
-  body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 0 0 4rem;
-  }
+/* Typeform-style Options */
+.tf-opts{display:flex;flex-direction:column;gap:12px;margin-bottom:1.5rem;width:100%}
+.tf-opt{display:flex;align-items:center;padding:14px 18px;border-radius:var(--r);border:2px solid var(--g200);background:var(--white);cursor:pointer;transition:all .2s ease;user-select:none;-webkit-tap-highlight-color:transparent;}
+.tf-opt:hover{border-color:var(--blue-mid);background:var(--blue-pale)}
+.tf-opt.sel{border-color:var(--blue);background:var(--blue-light)}
+.badge{display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;border:1px solid var(--g200);background:var(--g50);color:var(--g500);font-size:11px;font-weight:700;margin-right:14px;transition:all .2s; flex-shrink:0}
+.tf-opt.sel .badge{background:var(--blue);border-color:var(--blue);color:var(--white)}
+.opt-txt{font-size:16px;color:var(--text);font-weight:500;line-height:1.4}
+.tf-opt.sel .opt-txt{color:var(--blue)}
 
-  header {
-    width: 100%;
-    max-width: 520px;
-    padding: 2rem 1.25rem 1rem;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
+/* Grid Layout specific overrides */
+.tf-opts.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.tf-opts.grid .tf-opt { padding: 12px 14px; height: 100%; align-items: flex-start; }
+.tf-opts.grid .badge { margin-top: 2px; margin-right: 10px; width: 22px; height: 22px; }
+.tf-opts.grid .opt-txt { font-size: 14.5px; margin-top: 2px; }
 
-  .logo {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: var(--accent-bg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--accent-text);
-    flex-shrink: 0;
-    border: 1px solid var(--accent-border);
-  }
+/* Inputs */
+.tf-add{display:flex;align-items:center;padding:12px 16px;border-radius:var(--r);border:2px dashed var(--g300);background:var(--white);transition:all .2s;margin-bottom:1.5rem}
+.tf-add:focus-within{border-color:var(--blue);border-style:solid}
+.tf-add-inp{flex:1;border:none;background:transparent;font-size:16px;color:var(--text);font-family:inherit;outline:none;min-width:0}
+.tf-add-inp::placeholder{color:var(--g300)}
+.tf-add-btn{background:var(--g100);border:none;border-radius:8px;padding:8px 16px;font-size:14px;font-weight:600;color:var(--g700);cursor:pointer;transition:all .15s}
+.tf-add-btn:hover{background:var(--blue);color:white}
+.txt{width:100%;padding:14px 0;border:none;border-bottom:2px solid var(--g300);background:transparent;font-size:22px;font-weight:500;color:var(--text);font-family:inherit;outline:none;transition:border-color .2s;border-radius:0}
+.txt:focus{border-color:var(--blue)}
+.txt::placeholder{color:var(--g200);font-weight:400}
+.hint{font-size:13px;color:var(--g500);margin-top:12px;line-height:1.5}
 
-  .logo-text {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--text);
-    letter-spacing: -0.3px;
-  }
+/* Autocomplete */
+.ac-wrap{position:relative;width:100%}
+.ac-list{display:none;flex-direction:column;width:100%;max-height:220px;overflow-y:auto;background:var(--white);border:1px solid var(--g200);border-radius:var(--r);box-shadow:0 8px 24px rgba(0,0,0,0.08);margin-top:8px;z-index:10;position:absolute;}
+.ac-item{padding:14px 18px;font-size:15px;color:var(--text);cursor:pointer;border-bottom:1px solid var(--g50);transition:background .1s}
+.ac-item:last-child{border-bottom:none}
+.ac-item:hover{background:var(--blue-pale);color:var(--blue)}
 
-  .school-tag {
-    margin-left: auto;
-    font-size: 11px;
-    color: var(--text3);
-    background: var(--surface);
-    padding: 3px 9px;
-    border-radius: 20px;
-    border: 1px solid var(--border);
-  }
+/* Call to Action */
+.cta{display:inline-flex;align-items:center;gap:10px;margin-top:2rem;padding:16px 32px;background:var(--blue);color:#fff;font-size:16px;font-weight:600;border:none;border-radius:var(--r);cursor:pointer;font-family:inherit;transition:all .2s;-webkit-tap-highlight-color:transparent}
+.cta:hover:not(:disabled){background:#04386A;transform:translateY(-1px)}
+.cta:active:not(:disabled){transform:scale(.98)}
+.cta:disabled{background:var(--g300);cursor:default;transform:none}
+.ekey{font-size:13px;color:var(--g500);margin-top:12px}
+.ekey kbd{background:var(--g100);border:1px solid var(--g200);border-radius:4px;padding:3px 8px;font-size:11px}
 
-  #progress-bar {
-    width: 100%;
-    max-width: 520px;
-    padding: 0 1.25rem;
-    margin-bottom: 1.5rem;
-  }
+/* Cards */
+.info-card{background:var(--blue-pale);border:1px solid #C8DFF0;border-radius:var(--r);padding:16px 20px;margin-bottom:1.5rem;font-size:14.5px;color:#04386A;line-height:1.6}
+.warn-card{background:#FFF8F0;border:1px solid #FDDCB0;border-radius:var(--r);padding:16px 20px;margin-bottom:1.5rem;font-size:14.5px;color:#7A4A00;line-height:1.6}
 
-  .progress-track {
-    height: 2px;
-    background: var(--surface2);
-    border-radius: 2px;
-    overflow: hidden;
-  }
+/* Done State */
+.done-wrap{text-align:center;padding:4rem 0}
+.done-av{margin:0 auto 2rem;display:flex;justify-content:center}
+.done-title{font-size:32px;font-weight:700;color:var(--text);margin-bottom:1rem;letter-spacing:-.5px}
+.done-body{font-size:16px;color:var(--g700);line-height:1.6;max-width:420px;margin:0 auto}
+.done-detail{font-size:14px;color:var(--g500);margin-top:1.5rem;line-height:1.6}
 
-  .progress-fill {
-    height: 100%;
-    background: var(--accent-text);
-    border-radius: 2px;
-    width: 0%;
-    transition: width 0.4s ease;
-  }
-
-  #chat {
-    width: 100%;
-    max-width: 520px;
-    padding: 0 1.25rem;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .bubble-row {
-    display: flex;
-    align-items: flex-end;
-    gap: 8px;
-    margin-bottom: 0.75rem;
-    opacity: 0;
-    transform: translateY(10px);
-    transition: opacity 0.35s ease, transform 0.35s ease;
-  }
-
-  .bubble-row.show { opacity: 1; transform: translateY(0); }
-
-  .avatar {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background: var(--accent-bg);
-    border: 1px solid var(--accent-border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--accent-text);
-    flex-shrink: 0;
-  }
-
-  .bubble {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px 16px 16px 4px;
-    padding: 11px 15px;
-    font-size: 14.5px;
-    line-height: 1.6;
-    color: var(--text);
-    max-width: 88%;
-  }
-
-  .answer-area {
-    margin: 0.25rem 0 1.25rem 38px;
-    opacity: 0;
-    transform: translateY(6px);
-    transition: opacity 0.3s ease 0.2s, transform 0.3s ease 0.2s;
-  }
-
-  .answer-area.show { opacity: 1; transform: translateY(0); }
-
-  .pills {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 7px;
-  }
-
-  .pill {
-    padding: 8px 14px;
-    border-radius: 20px;
-    border: 1px solid var(--border2);
-    background: var(--bg);
-    font-size: 13.5px;
-    color: var(--text);
-    cursor: pointer;
-    transition: background 0.15s, border-color 0.15s, color 0.15s;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .pill:hover { background: var(--surface); }
-
-  .pill.selected {
-    background: var(--pill-sel-bg);
-    border-color: transparent;
-    color: var(--pill-sel-text);
-    font-weight: 500;
-  }
-
-  .section-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text3);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin: 12px 0 7px;
-  }
-
-  .section-label:first-child { margin-top: 0; }
-
-  .text-input {
-    width: 100%;
-    padding: 11px 14px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border2);
-    background: var(--bg);
-    font-size: 14px;
-    color: var(--text);
-    font-family: inherit;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-
-  .text-input:focus { border-color: var(--accent-text); }
-  .text-input::placeholder { color: var(--text3); }
-
-  .hint {
-    font-size: 12px;
-    color: var(--text3);
-    margin-top: 5px;
-  }
-
-  .next-btn {
-    margin-top: 10px;
-    padding: 9px 20px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border2);
-    background: var(--bg);
-    font-size: 13.5px;
-    color: var(--text);
-    cursor: pointer;
-    font-family: inherit;
-    transition: background 0.15s;
-  }
-
-  .next-btn:hover { background: var(--surface); }
-  .next-btn:disabled { opacity: 0.3; cursor: default; }
-
-  .user-reply {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: 0.75rem;
-    opacity: 0;
-    transform: translateY(6px);
-    transition: opacity 0.3s ease, transform 0.3s ease;
-  }
-
-  .user-reply.show { opacity: 1; transform: translateY(0); }
-
-  .user-bubble {
-    background: var(--accent-bg);
-    border: 1px solid var(--accent-border);
-    border-radius: 16px 16px 4px 16px;
-    padding: 10px 15px;
-    font-size: 13.5px;
-    color: var(--accent-text);
-    max-width: 82%;
-    line-height: 1.55;
-  }
-
-  .done-card {
-    margin: 1.5rem 0 0 38px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1.25rem;
-    opacity: 0;
-    transform: translateY(8px);
-    transition: opacity 0.4s ease, transform 0.4s ease;
-  }
-
-  .done-card.show { opacity: 1; transform: translateY(0); }
-  .done-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
-  .done-body { font-size: 13.5px; color: var(--text2); line-height: 1.65; }
+@media (max-width: 600px) {
+  .inner{padding:2rem 1.25rem 4rem}
+  .qtxt{font-size:22px}
+  .txt{font-size:20px}
+  .tf-opt{padding:14px 16px;}
+  .cta{width:100%;justify-content:center;margin-top:1.5rem}
+  .ekey{display:none !important}
+  
+  /* Mobile Grid Overrides */
+  .tf-opts.grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .tf-opts.grid .tf-opt { padding: 10px; }
+  .tf-opts.grid .badge { margin-right: 8px; width: 20px; height: 20px; font-size: 10px; }
+  .tf-opts.grid .opt-txt { font-size: 14px; }
+}
 </style>
 </head>
 <body>
-
-<header>
-  <div class="logo">C</div>
-  <span class="logo-text">CircleU</span>
-  <span class="school-tag">University of Minnesota</span>
-</header>
-
-<div id="progress-bar">
-  <div class="progress-track">
-    <div class="progress-fill" id="fill"></div>
-  </div>
+<div id="pw"><div id="pf"></div></div>
+<div id="bar">
+  <!-- Brand Logo inside Header -->
+  <img src="https://circleu.app/logo.png" style="width:24px;height:24px;border-radius:12px;background:var(--blue);" onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%2305457B\'><circle cx=\'12\' cy=\'12\' r=\'12\'/><text x=\'12\' y=\'16\' fill=\'white\' font-size=\'12\' font-family=\'sans-serif\' text-anchor=\'middle\'>C</text></svg>'">
+  <span class="brand">CircleU</span>
+  <span class="ctag">University of Minnesota</span>
 </div>
-
-<div id="chat"></div>
+<div id="slides"></div>
 
 <script>
-const steps = [
-  {
-    id: 'email',
-    msg: "Hey Gopher. We're organizing a few real hangouts for UMN students this week — no planning needed. Can I grab your UMN email first?",
-    type: 'text',
-    placeholder: 'yourname@umn.edu',
-    hint: 'Only used to verify you go to UMN and to reach out if we find your group. Never shared.',
-    validate: v => v.includes('@') && (v.includes('umn') || v.includes('.edu'))
-  },
-  {
-    id: 'year',
-    msg: "What year are you?",
-    type: 'single',
-    options: ['Freshman', 'Sophomore', 'Junior', 'Senior', 'Grad student']
-  },
-  {
-    id: 'major',
-    msg: "What's your major or college? General area is totally fine.",
-    type: 'text',
-    placeholder: 'e.g. Engineering, Liberal Arts, Business...',
-    hint: 'Helps us find people at a similar point in school.',
-    validate: v => v.trim().length > 1
-  },
-  {
-    id: 'hangouts',
-    msg: "Which of these would you actually go to? Pick everything that appeals to you.",
-    type: 'multi',
-    grouped: true,
-    groups: [
-      {
-        label: 'On campus this week',
-        options: [
-          'Trivia night at Goldy\'s Gameroom — Wed',
-          'Game night at Beacon — Thu',
-          'Blood on the Clocktower — Fri night',
-          'Othello theater — Mar 26 to 29',
-          'Casual climbing at RecWell — Mon Mar 30',
-          'PAWS therapy dogs — Wilson Library Apr 2'
-        ]
-      },
-      {
-        label: 'Hangout spots near campus',
-        options: [
-          'Korean food in Dinkytown — Kimchi Tofu or Kbop',
-          'Late night at Hard Times Cafe',
-          'Thrift + food in Dinkytown',
-          'Low-key bar night at Stub and Herb\'s',
-          'Walk along Stone Arch Bridge or River Flats'
-        ]
-      },
-      {
-        label: 'Cultural',
-        options: [
-          'Madhavi — Indian Student Association, Sat Mar 28'
-        ]
-      }
-    ]
-  },
-  {
-    id: 'availability',
-    msg: "When are you free this week? Pick everything that works.",
-    type: 'multi',
-    options: ['Tuesday evening', 'Wednesday evening', 'Thursday evening', 'Friday night', 'Saturday', 'Sunday afternoon']
-  },
-  {
-    id: 'groupsize',
-    msg: "Last one — how many people feels right for a hangout?",
-    type: 'single',
-    options: ['2 to 3', '4 to 6', '7 or more', 'No preference']
-  }
+const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+const UMN_MAJORS = [
+  'Accounting','Aerospace Engineering','Architecture','Biology','Biomedical Engineering','Business / Carlson',
+  'Chemical Engineering','Chemistry','Civil Engineering','Computer Science','Data Science','Economics',
+  'Electrical Engineering','English','Finance','History','Information Technology','Journalism',
+  'Marketing','Mathematics','Mechanical Engineering','Nursing','Philosophy','Physics',
+  'Political Science','Psychology','Sociology','Undecided / Exploring'
 ];
 
-const responses = {};
-let current = 0;
-const chat = document.getElementById('chat');
-const fill = document.getElementById('fill');
+const steps=[
+  {id:'email',
+   q:"Hey Gopher. I'm organizing a few real hangouts for UMN students this week. No planning needed from you. What's your UMN email?",
+   type:'text',ph:'yourname@umn.edu',
+   hint:"Used only to verify you go to UMN and to reach you if I find your group. Never shared.",
+   ok:v=>v.includes('@')&&(v.toLowerCase().includes('umn')||v.includes('.edu'))},
 
-function updateProgress() {
-  fill.style.width = ((current / steps.length) * 100) + '%';
+  {id:'year',
+   q:"What year are you?",
+   type:'single',
+   opts:['Freshman','Sophomore','Junior','Senior','Grad student']},
+
+  {id:'major',
+   q:"What's your major or college?",
+   type:'autocomplete',ph:'Type to search majors...',
+   hint:"General area is fine. Helps match you with people at a similar point.",
+   opts: UMN_MAJORS,
+   ok:v=>v.trim().length>2},
+
+  {id:'vibe',
+   q:"When you actually go out, what makes it feel worth it versus staying in?",
+   info:"This helps me build a group with the right energy, not just the right interests.",
+   type:'single',
+   opts:[
+     'Having a loose plan already',
+     'Spontaneous energy in the group',
+     'A familiar activity as the anchor',
+     'Meeting just 1 or 2 new people'
+   ]},
+
+  {id:'comfort',
+   q:"How comfortable are you going somewhere with people you have never met?",
+   info:"Be honest. There is no wrong answer and it shapes how I match you.",
+   type:'single',
+   opts:[
+     'Totally fine with it',
+     'Fine if there is a clear activity',
+     'I would prefer a warm intro first',
+     'Not really my thing right now'
+   ]},
+
+  {id:'interests',
+   q:"What are you into right now? Pick everything that fits.",
+   type:'multi-custom',
+   grid: true,
+   opts:['March Madness','Coffee runs','Running / jogging','Frisbee','Tanning outside','Hiking','Gym / lifting','Photography walks','Thrifting','Live music / shows','Board games','Cooking and food','Gaming','Picnics outside']},
+
+  {id:'hangouts',
+   q:"Which of these would you actually go to this week?",
+   info:"Real events and spots. Pick everything that sounds good.",
+   type:'multi-grouped',
+   groups:[
+     {label:'On campus this week',opts:['Trivia night at Goldy\'s Gameroom, Wed','Game night at Beacon, Thu','Blood on the Clocktower, Fri night','Casual climbing at RecWell']},
+     {label:'Spots near campus',opts:['Korean food in Dinkytown','Late night at Hard Times Cafe','Thrift run in Dinkytown','Walk along Stone Arch Bridge']}
+   ]},
+
+  {id:'avail',
+   q:"When are you free? Pick everything that works.",
+   type:'multi-custom',
+   grid: true,
+   opts:['Tuesday evening','Wednesday evening','Thursday evening','Friday night','Saturday afternoon','Saturday evening','Sunday afternoon'],
+   cph:'Add a specific time...'},
+
+  {id:'size',
+   q:"How many people feels right for a hangout?",
+   type:'single',
+   opts:['2 to 3','4 to 6','7 or more','No preference']},
+
+  {id:'bail',
+   q:"What would most likely make you not show up even if we found your group?",
+   info:"Helps me build groups that actually happen.",
+   type:'single',
+   opts:[
+     'If I do not know anyone there',
+     'If the spot feels off or too far',
+     'If my plans change last minute',
+     'Honestly I would show up no matter what'
+   ]}
+];
+
+const R={};let cur=0;let busy=false;
+const sl=document.getElementById('slides');
+const pf=document.getElementById('pf');
+
+function av(sz=52){return `<div class="av" style="width:${sz}px;height:${sz}px"><img src="https://circleu.app/mascot.svg" onerror="this.onerror=null;this.src='https://circleu.app/mascot.png'" alt="Mascot" style="width:100%;height:100%;object-fit:cover;"></div>`}
+function chev(){return`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>`}
+
+function buildOpt(o, idx, isMulti) {
+  return `
+    <div class="tf-opt" data-v="${o}">
+      <div class="badge">${isMulti ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>` : ALPHA[idx % 26]}</div>
+      <div class="opt-txt">${o}</div>
+    </div>
+  `;
 }
 
-function show(el, delay = 0) {
-  setTimeout(() => el.classList.add('show'), delay);
-}
+function build(i){
+  const s=steps[i];
+  const el=document.createElement('div');
+  el.className='slide';
+  const isLast=i===steps.length-1;
+  let body='';
 
-function scrollDown() {
-  setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 100);
-}
-
-function addBubble(text, delay = 0) {
-  const row = document.createElement('div');
-  row.className = 'bubble-row';
-  row.innerHTML = `<div class="avatar">S</div><div class="bubble">${text}</div>`;
-  chat.appendChild(row);
-  show(row, delay);
-  return row;
-}
-
-function addUserReply(text) {
-  const r = document.createElement('div');
-  r.className = 'user-reply';
-  r.innerHTML = `<div class="user-bubble">${text}</div>`;
-  chat.appendChild(r);
-  show(r, 50);
-  scrollDown();
-}
-
-function renderStep(index) {
-  updateProgress();
-  const step = steps[index];
-  const delay = index === 0 ? 200 : 0;
-  addBubble(step.msg, delay);
-
-  const area = document.createElement('div');
-  area.className = 'answer-area';
-
-  if (step.type === 'text') {
-    const inp = document.createElement('input');
-    inp.type = 'text';
-    inp.className = 'text-input';
-    inp.placeholder = step.placeholder;
-    const hint = document.createElement('div');
-    hint.className = 'hint';
-    hint.textContent = step.hint || '';
-    const btn = document.createElement('button');
-    btn.className = 'next-btn';
-    btn.textContent = 'Continue';
-    btn.disabled = true;
-    inp.addEventListener('input', () => { btn.disabled = !step.validate(inp.value); });
-    inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !btn.disabled) btn.click(); });
-    btn.addEventListener('click', () => {
-      const val = inp.value.trim();
-      responses[step.id] = val;
-      area.style.pointerEvents = 'none';
-      area.style.opacity = '0.35';
-      addUserReply(val);
-      setTimeout(() => next(), 450);
+  if(s.type==='text'){
+    body=`${s.info?`<div class="info-card">${s.info}</div>`:''}
+    <input class="txt" id="ti" type="text" placeholder="${s.ph}" autocomplete="off" spellcheck="false">
+    <div class="hint">${s.hint||''}</div>
+    <div>
+      <button class="cta" id="cb" disabled>Continue ${chev()}</button>
+      <div class="ekey">or press <kbd>Enter</kbd></div>
+    </div>`;
+  } else if (s.type === 'autocomplete') {
+    body=`${s.info?`<div class="info-card">${s.info}</div>`:''}
+    <div class="ac-wrap">
+      <input class="txt" id="ti" type="text" placeholder="${s.ph}" autocomplete="off" spellcheck="false">
+      <div class="ac-list" id="ac-list"></div>
+    </div>
+    <div class="hint">${s.hint||''}</div>
+    <div>
+      <button class="cta" id="cb" disabled>Continue ${chev()}</button>
+    </div>`;
+  } else if(s.type==='single'){
+    const optsHtml=s.opts.map((o, idx)=>buildOpt(o, idx, false)).join('');
+    body=`${s.info?`<div class="info-card">${s.info}</div>`:''}
+    <div class="tf-opts">${optsHtml}</div>`;
+  } else if(s.type==='multi-grouped'){
+    let g='';
+    s.groups.forEach(gr=>{
+      g+=`<div class="sec-label">${gr.label}</div><div class="tf-opts">${gr.opts.map((o, idx)=>buildOpt(o, idx, true)).join('')}</div>`;
     });
-    area.appendChild(inp);
-    if (step.hint) area.appendChild(hint);
-    area.appendChild(btn);
-    chat.appendChild(area);
-    show(area, delay + 250);
-    setTimeout(() => inp.focus(), delay + 350);
+    body=`${s.info?`<div class="info-card">${s.info}</div>`:''}${g}
+    <button class="cta" id="cb" disabled>${isLast?'Send Response':'Continue'} ${chev()}</button>`;
+  } else if(s.type==='multi-custom'){
+    const optsHtml=s.opts.map((o, idx)=>buildOpt(o, idx, true)).join('');
+    body=`${s.info?`<div class="info-card">${s.info}</div>`:''}
+    <div class="tf-opts${s.grid ? ' grid' : ''}" id="custom-opts-wrap">${optsHtml}</div>
+    <div class="tf-add">
+      <input class="tf-add-inp" id="ai" placeholder="${s.cph||'Add another option...'}" autocomplete="off">
+      <button class="tf-add-btn" id="ab">Add</button>
+    </div>
+    <button class="cta" id="cb" disabled>${isLast?'Send Response':'Continue'} ${chev()}</button>`;
+  }
 
-  } else if (step.type === 'single') {
-    const pills = document.createElement('div');
-    pills.className = 'pills';
-    step.options.forEach(opt => {
-      const p = document.createElement('div');
-      p.className = 'pill';
-      p.textContent = opt;
-      p.addEventListener('click', () => {
-        responses[step.id] = opt;
-        area.style.pointerEvents = 'none';
-        area.style.opacity = '0.35';
-        addUserReply(opt);
-        setTimeout(() => next(), 450);
+  el.innerHTML=`<div class="inner"><div class="qrow">${av()}<div><div class="qtxt">${s.q}</div></div></div>${body}</div>`;
+  return el;
+}
+
+function wire(el,i){
+  const s=steps[i];
+  if(s.type==='text'){
+    const inp=el.querySelector('#ti'),btn=el.querySelector('#cb');
+    inp.oninput=()=>{btn.disabled=!s.ok(inp.value)};
+    inp.onkeydown=e=>{if(e.key==='Enter'&&!btn.disabled)btn.click()};
+    btn.onclick=()=>{if(busy)return;R[s.id]=inp.value.trim();go()};
+  } else if (s.type === 'autocomplete') {
+    const inp=el.querySelector('#ti'), btn=el.querySelector('#cb'), list=el.querySelector('#ac-list');
+    
+    const renderList = (val) => {
+      list.innerHTML = '';
+      if(!val) { list.style.display = 'none'; return; }
+      const matches = s.opts.filter(o => o.toLowerCase().includes(val.toLowerCase()));
+      if(matches.length === 0) { list.style.display = 'none'; return; }
+      
+      list.style.display = 'flex';
+      matches.forEach(m => {
+        const item = document.createElement('div');
+        item.className = 'ac-item';
+        item.textContent = m;
+        item.onclick = () => {
+          inp.value = m;
+          list.style.display = 'none';
+          btn.disabled = false;
+          btn.click(); // Auto advance on selection
+        };
+        list.appendChild(item);
       });
-      pills.appendChild(p);
+    };
+
+    inp.oninput=()=>{
+      btn.disabled=!s.ok(inp.value);
+      renderList(inp.value.trim());
+    };
+    inp.onkeydown=e=>{if(e.key==='Enter'&&!btn.disabled)btn.click()};
+    btn.onclick=()=>{if(busy)return;R[s.id]=inp.value.trim();go()};
+
+    document.addEventListener('click', (e) => {
+      if(!el.querySelector('.ac-wrap').contains(e.target)) list.style.display = 'none';
     });
-    area.appendChild(pills);
-    chat.appendChild(area);
-    show(area, delay + 250);
 
-  } else if (step.type === 'multi') {
-    const selected = new Set();
-    const btn = document.createElement('button');
-    btn.className = 'next-btn';
-    btn.textContent = index === steps.length - 1 ? "That's it, send it" : 'Looks good';
-    btn.disabled = true;
-
-    if (step.grouped) {
-      step.groups.forEach(group => {
-        const label = document.createElement('div');
-        label.className = 'section-label';
-        label.textContent = group.label;
-        area.appendChild(label);
-        const pills = document.createElement('div');
-        pills.className = 'pills';
-        group.options.forEach(opt => {
-          const p = document.createElement('div');
-          p.className = 'pill';
-          p.textContent = opt;
-          p.addEventListener('click', () => {
-            if (selected.has(opt)) { selected.delete(opt); p.classList.remove('selected'); }
-            else { selected.add(opt); p.classList.add('selected'); }
-            btn.disabled = selected.size === 0;
-          });
-          pills.appendChild(p);
-        });
-        area.appendChild(pills);
-      });
-    } else {
-      const pills = document.createElement('div');
-      pills.className = 'pills';
-      step.options.forEach(opt => {
+  } else if(s.type==='single'){
+    el.querySelectorAll('.tf-opt').forEach(p=>{
+      p.onclick=()=>{
+        if(busy)return;
+        el.querySelectorAll('.tf-opt').forEach(opt=>opt.classList.remove('sel'));
+        p.classList.add('sel');
+        R[s.id]=p.dataset.v;
+        if(s.id==='comfort'&&p.dataset.v==='Not really my thing right now'){
+          setTimeout(showNotReady, 350); return;
+        }
+        setTimeout(go, 350); // Slight delay for visual feedback
+      }
+    });
+  } else if(s.type==='multi-grouped'||s.type==='multi'||s.type==='multi-custom'){
+    const sel=new Set(),btn=el.querySelector('#cb');
+    el.querySelectorAll('.tf-opt').forEach(p=>{
+      p.onclick=()=>{
+        sel.has(p.dataset.v)?(sel.delete(p.dataset.v),p.classList.remove('sel')):(sel.add(p.dataset.v),p.classList.add('sel'));
+        btn.disabled=sel.size===0;
+      }
+    });
+    
+    if(s.type==='multi-custom'){
+      const pw=el.querySelector('#custom-opts-wrap'), ai=el.querySelector('#ai'), ab=el.querySelector('#ab');
+      function addC(){
+        const v=ai.value.trim();if(!v||sel.has(v))return;
+        sel.add(v);ai.value='';
+        
         const p = document.createElement('div');
-        p.className = 'pill';
-        p.textContent = opt;
-        p.addEventListener('click', () => {
-          if (selected.has(opt)) { selected.delete(opt); p.classList.remove('selected'); }
-          else { selected.add(opt); p.classList.add('selected'); }
-          btn.disabled = selected.size === 0;
-        });
-        pills.appendChild(p);
-      });
-      area.appendChild(pills);
+        p.className = 'tf-opt sel';
+        p.dataset.v = v;
+        p.innerHTML = `<div class="badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div><div class="opt-txt">${v}</div>`;
+        
+        p.onclick=()=>{
+          sel.has(v)?(sel.delete(v),p.classList.remove('sel')):(sel.add(v),p.classList.add('sel'));
+          btn.disabled=sel.size===0;
+        };
+        pw.appendChild(p);btn.disabled=false;
+      }
+      ab.onclick=addC;
+      ai.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();addC()}};
     }
 
-    btn.addEventListener('click', () => {
-      const vals = [...selected];
-      responses[step.id] = vals;
-      area.style.pointerEvents = 'none';
-      area.style.opacity = '0.35';
-      addUserReply(vals.join(', '));
-      setTimeout(() => next(), 450);
-    });
-    area.appendChild(btn);
-    chat.appendChild(area);
-    show(area, delay + 250);
-  }
-
-  scrollDown();
-}
-
-function next() {
-  current++;
-  if (current < steps.length) {
-    renderStep(current);
-  } else {
-    finish();
+    btn.onclick=()=>{if(busy)return;R[s.id]=[...sel];go()};
   }
 }
 
-function finish() {
-  fill.style.width = '100%';
-  const done = document.createElement('div');
-  done.className = 'done-card';
-  done.innerHTML = `
+function go(){
+  busy=true;
+  const old=sl.querySelector('.slide.active');
+  old.classList.remove('active');old.classList.add('exit');
+  
+  // Clean up old slides from DOM after transition
+  setTimeout(()=>old.remove(), 450);
+  
+  cur++;
+  pf.style.width=Math.round((cur/steps.length)*100)+'%';
+  
+  if(cur>=steps.length){setTimeout(()=>{done();busy=false},200);return}
+  
+  const n=build(cur);
+  sl.appendChild(n);
+  wire(n,cur);
+  
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    n.classList.add('active');
+    
+    // Auto focus on desktop only (avoid iOS keyboard jump)
+    if(window.innerWidth > 600) {
+      const t=n.querySelector('.txt') || n.querySelector('.tf-add-inp');
+      if(t)setTimeout(()=>t.focus(),400);
+    }
+    busy=false;
+  }));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function showNotReady(){
+  busy=true;
+  const old=sl.querySelector('.slide.active');
+  old.classList.remove('active');old.classList.add('exit');
+  setTimeout(()=>old.remove(),450);
+  const el=document.createElement('div');
+  el.className='slide';
+  el.innerHTML=`<div class="inner"><div class="qrow">${av()}<div><div class="qtxt">That's totally fair.</div></div></div>
+  <div class="warn-card">Hangouts with strangers aren't for everyone right now. CircleU works better when you're genuinely ready for it. I won't match you this round but I'm keeping your email and will reach out when there's a softer way in.</div>
+  <div class="hint" style="margin-top:.5rem">No spam, no pressure. You'll only hear from us when something fits.</div></div>`;
+  sl.appendChild(el);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{el.classList.add('active');busy=false}));
+  pf.style.width='100%';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function done(){
+  pf.style.width='100%';
+  const el=document.createElement('div');
+  el.className='slide';
+  el.innerHTML=`<div class="inner"><div class="done-wrap">
+    <div class="done-av">${av(80)}</div>
     <div class="done-title">You're in.</div>
-    <div class="done-body">I'll review responses over the next 48 hours. If I find a group that fits, I'll email you before sharing anything about you with anyone. If there's no match this week, I'll let you know that too. Either way, you'll hear back.</div>
-  `;
-  chat.appendChild(done);
-  show(done, 300);
-  scrollDown();
-  console.log('CircleU UMN responses:', responses);
+    <div class="done-body">I'll review responses over the next 24 to 48 hours. If I find a group that fits, I'll email you before sharing anything about you with anyone.</div>
+    <div class="done-detail">If the match isn't right this week, I'll let you know that too. Either way you'll hear back. No ghosts.</div>
+  </div></div>`;
+  sl.appendChild(el);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('active')));
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 
-renderStep(0);
+// Initialize First Slide
+pf.style.width='0%';
+const first=build(0);sl.appendChild(first);wire(first,0);
+requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  first.classList.add('active');
+  if(window.innerWidth > 600) {
+    const t=first.querySelector('.txt');if(t)setTimeout(()=>t.focus(),300);
+  }
+}));
 </script>
 </body>
 </html>
