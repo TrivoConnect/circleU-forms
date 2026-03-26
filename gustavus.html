@@ -562,25 +562,63 @@ function done(){
   pf.style.width='100%';
   const el=document.createElement('div');
   el.className='step-wrapper active final-screen';
+  
+  // Create a loading state while we send data to Google Sheets
   el.innerHTML=`
     <div class="bot-row">
       ${av()}
       <div class="bot-content">
-        <div class="qtxt" style="font-size:24px; margin-bottom:12px;">You're in.</div>
-        <div class="info-card">
-          I'll review responses over the next 24 to 48 hours. If I find a group that fits, I'll email you before sharing anything about you with anyone.
-          <br><br>
-          If the match isn't right this week, I'll let you know that too. Either way you'll hear back. No ghosts.
-        </div>
-        <div style="text-align: left; margin-top: 24px;">
-          <p style="font-size: 13px; color: var(--g500); margin-bottom: 12px; font-weight: 500;">Need to change an answer? Scroll up and tap on your previous message to edit it.</p>
-          <button class="cta" onclick="location.reload()" style="margin-top: 0; padding: 12px 24px; font-size: 14px; background: var(--white); color: var(--text); border: 2px solid var(--g200);">Submit Another Entry</button>
-        </div>
+        <div class="qtxt" id="final-msg" style="font-size:24px; margin-bottom:12px;">Saving your responses...</div>
       </div>
     </div>`;
   chat.appendChild(el);
   scrollToStep(el);
+
+  // --- SEND DATA TO GOOGLE SHEETS ---
+  // PASTE YOUR ACTUAL APPS SCRIPT WEB APP URL HERE
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzLfKlUO7JkofD6BPd18BCL0DFztEw-4QGVPtZNDJQFSWnkd8kkAMvjDNqPvKHBXtHlTQ/exec"; 
+  
+  // Format the R object to be sent as form-urlencoded data
+  const params = new URLSearchParams();
+  for (const key in R) {
+    let val = R[key];
+    // If the value is an array (like multiple choice), join it into a comma-separated string
+    if (Array.isArray(val)) {
+      val = val.join(', ');
+    }
+    params.append(key, val);
+  }
+
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    body: params
+  })
+  .then(response => response.json())
+  .then(data => {
+    // Update the UI once it successfully saves
+    const finalMsg = document.getElementById('final-msg');
+    const parent = finalMsg.parentElement;
+    
+    finalMsg.innerText = "You're in.";
+    parent.innerHTML += `
+      <div class="info-card">
+        I'll review responses over the next 24 to 48 hours. If I find a group that fits, I'll email you before sharing anything about you with anyone.
+        <br><br>
+        If the match isn't right this week, I'll let you know that too. Either way you'll hear back. No ghosts.
+      </div>
+      <div style="text-align: left; margin-top: 24px;">
+        <p style="font-size: 13px; color: var(--g500); margin-bottom: 12px; font-weight: 500;">Need to change an answer? Scroll up and tap on your previous message to edit it.</p>
+        <button class="cta" onclick="location.reload()" style="margin-top: 0; padding: 12px 24px; font-size: 14px; background: var(--white); color: var(--text); border: 2px solid var(--g200);">Submit Another Entry</button>
+      </div>
+    `;
+    scrollToStep(el);
+  })
+  .catch(error => {
+    console.error('Error!', error.message);
+    document.getElementById('final-msg').innerText = "Oops! Something went wrong while saving. Please try again.";
+  });
 }
+
 
 pf.style.width='0%';
 renderStep(0);
